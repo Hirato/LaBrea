@@ -20,7 +20,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  * 02111-1307, USA.
  *
- * $Id: labrea_init.c,v 1.1 2003/01/09 18:13:19 lorgor Exp $
+ * $Id: labrea_init.c,v 1.2 2003/09/12 21:23:39 lorgor Exp $
  */
 
 #include "config.h"
@@ -63,8 +63,7 @@ Usage (void)
 	  
     warnx("\n\n\nUsage: LaBrea <options> <BPF filter>\n"
 	  "Options:\n"
-	  "--device (-i) adaptnum  : WinPcap adapter device to be used i.e. -i 1\n"
-	  "--libdnet-intf (-j) intfnum	: libdnet interface to be used i.e. -j 3\n"
+	  "--winpcap-dev (-j) intfnum	: libdnet interface to be used i.e. -j 3\n"
 	  "--list-interfaces (-D)  : Lists available adapters / interfaces for -i/-j\n"
 	  "--syslog-server addr    : IP address or hostname of remote syslog server\n"
 	  "--syslog-port           : Remote syslog port"
@@ -95,7 +94,7 @@ Usage (void)
 	"--quiet (-q)            : Do not report odd (out of netblock) ARPs\n"
 	"--dry-run (-T)          : Test mode - Prints out messages but DOES NOT RUN\n"
 	"--soft-restart (-R)     : Soft restart - Wait while recapturing active connects\n"
-	"--max-rate (-p) maxrate : \"Persist\" state capture connect attempts\n"
+	"--max-rate (-p) maxrate : \"Persist\" state capture connect attempts up to Kb/sec\n"
 	"--persist-mode-only (-P): Persist mode capture only\n"
 	"--log-bandwidth (-b)    : Log bandwidth usage to syslog\n"
 	"--log-to-stdout (-o)    : Output to stdout instead of syslog, implies -d\n"
@@ -168,6 +167,7 @@ read_number (u_char *p)
   if ((strlen(invalid) > 0) || (result < 0)) {
     strlcpy(buf, invalid, sizeof(buf));
     warnx("*** Invalid integer input: %s", buf);
+    input_error = TRUE;
   }
   return(result);
 }
@@ -200,48 +200,48 @@ labrea_init (int argc, char **argv)
   int option_index = 0;		/* Option index */  
 
   static struct option long_options[] =
-  {
-    {"network", 			required_argument,	0, 'n'},
-    {"mask", 				required_argument,	0, 'm'},
-    {"device", 				required_argument,	0, 'i'},
-    {"libdnet-intf",			required_argument,	0, 'j'},
-    {"my-ip-addr",			required_argument,	0, 'I'},
-    {"my-mac-addr",			required_argument,	0, 'E'},
-    {"quiet",  				no_argument,       	0, 'q'},
-    {"bpf-file",  			required_argument, 	0, 'F'},
-    {"throttle-size",  			required_argument, 	0, 't'},
-    {"arp-timeout",    	   		required_argument, 	0, 'r'},
-    {"switch-safe",    			no_argument, 		0, 's'},
-    {"exclude-resolvable-ips", 		no_argument, 		0, 'X'},
-    {"disable-capture", 		no_argument, 		0, 'x'},
-    {"hard-capture",   			no_argument,		0, 'h'},
-    {"soft-restart",   			no_argument, 		0, 'R'},
-    {"auto-hard-capture", 		no_argument, 		0, 'H'},
-    {"max-rate",   			required_argument,	0, 'p'},
-    {"log-bandwidth", 			no_argument, 		0, 'b'},
-    {"persist-mode-only", 		no_argument, 		0, 'P'},
-    {"no-resp-synack", 			no_argument, 		0, 'a'},
-    {"no-resp-excluded-ports", 		no_argument,		0, 'f'},
-    {"log-to-syslog", 			no_argument, 		0, 'l'},
-    {"verbose", 			no_argument, 		0, 'v'},
-    {"log-to-stdout", 			no_argument, 		0, 'o'},
-    {"log-timestamp-epoch", 		no_argument,		0, 'O'},
-    {"version", 			no_argument, 		0, 'V'},
-    {"dry-run", 			no_argument, 		0, 'T'},
-    {"foreground", 			no_argument, 		0, 'd'},
-    {"no-nag", 				no_argument, 		0, 'z'},
-    {"usage", 				no_argument, 		0, '?'},
-    {"help", 				no_argument, 		0, '?'},
-    {"init-file",   			required_argument,	0, '2'},
-    {"no-arp-sweep",   			no_argument,		0, '3'},
-    {"syslog-server",  			required_argument,	0, '4'},
-    {"syslog-port",   			required_argument,	0, '5'},
+    {
+      {"network", 			required_argument,	0, 'n'},
+      {"mask", 				required_argument,	0, 'm'},
+      {"device", 				required_argument,	0, 'i'},
+      {"winpcap-dev",			required_argument,	0, 'j'},
+      {"my-ip-addr",			required_argument,	0, 'I'},
+      {"my-mac-addr",			required_argument,	0, 'E'},
+      {"quiet",  				no_argument,       	0, 'q'},
+      {"bpf-file",  			required_argument, 	0, 'F'},
+      {"throttle-size",  			required_argument, 	0, 't'},
+      {"arp-timeout",    	   		required_argument, 	0, 'r'},
+      {"switch-safe",    			no_argument, 		0, 's'},
+      {"exclude-resolvable-ips", 		no_argument, 		0, 'X'},
+      {"disable-capture", 		no_argument, 		0, 'x'},
+      {"hard-capture",   			no_argument,		0, 'h'},
+      {"soft-restart",   			no_argument, 		0, 'R'},
+      {"auto-hard-capture", 		no_argument, 		0, 'H'},
+      {"max-rate",   			required_argument,	0, 'p'},
+      {"log-bandwidth", 			no_argument, 		0, 'b'},
+      {"persist-mode-only", 		no_argument, 		0, 'P'},
+      {"no-resp-synack", 			no_argument, 		0, 'a'},
+      {"no-resp-excluded-ports", 		no_argument,		0, 'f'},
+      {"log-to-syslog", 			no_argument, 		0, 'l'},
+      {"verbose", 			no_argument, 		0, 'v'},
+      {"log-to-stdout", 			no_argument, 		0, 'o'},
+      {"log-timestamp-epoch", 		no_argument,		0, 'O'},
+      {"version", 			no_argument, 		0, 'V'},
+      {"dry-run", 			no_argument, 		0, 'T'},
+      {"foreground", 			no_argument, 		0, 'd'},
+      {"no-nag", 				no_argument, 		0, 'z'},
+      {"usage", 				no_argument, 		0, '?'},
+      {"help", 				no_argument, 		0, '?'},
+      {"init-file",   			required_argument,	0, '2'},
+      {"no-arp-sweep",   			no_argument,		0, '3'},
+      {"syslog-server",  			required_argument,	0, '4'},
+      {"syslog-port",   			required_argument,	0, '5'},
 #ifdef DEBUG_LB
-    {"debug",		   		required_argument,	0, '6'},
+      {"debug",		   		required_argument,	0, '6'},
 #endif
-    {"list-interfaces",   		no_argument,		0, 'D'},
-    {0, 0, 0, 0}
-  };
+      {"list-interfaces",   		no_argument,		0, 'D'},
+      {0, 0, 0, 0}
+    };
 
 
   static char rcsid[] = PACKAGE_STRING " " PACKAGE_BUGREPORT;
@@ -367,23 +367,14 @@ labrea_init (int argc, char **argv)
       ctl.feature |= FL_NO_RST_EXCL_PORT;
       break;
     case 'i':
-      if (WIN32_FLG) {
-	io.adapter_num = read_number(optarg);
-	if (io.adapter_num <=0 || io.adapter_num > MAX_NUM_ADAPTER) {
-	  warnx("*** WinPcap driver adapter specified %d is invalid",
-		io.adapter_num);
-	  input_error = TRUE;
-	}
-      }
-      else
-	strlcpy(dev, optarg, sizeof(dev));
+      strlcpy(dev, optarg, sizeof(dev));
       /* lbio_init will do further checking */
       break;
     case 'j':
       if (WIN32_FLG) {
 	io.intf_num = read_number(optarg);
 	if (io.intf_num <=0 || io.intf_num > MAX_NUM_ADAPTER) {
-	  warnx("*** Libdnet interface specified %d is invalid", io.intf_num);
+	  warnx("*** Winpcap device specified %d is invalid", io.intf_num);
 	  input_error = TRUE;
 	}
       }
@@ -489,8 +480,12 @@ labrea_init (int argc, char **argv)
     }
   }
   if (ctl.maxbw > 0) {
+    ctl.maxbw = ctl.maxbw >> 3;	/* Convert Kbits to Kbytes */
+    if (ctl.maxbw > MAX_BW) {
+      ctl.maxbw = MAX_BW;	/* Max 1 GByte to avoid integer overflows */
+    }
     ctl.throttlesize = THROTTLE_WINDOW_SLOW;
-    ctl.newthisminute = ctl.maxbw;
+    ctl.newthisminute = ctl.maxbw * ONE_K;	/* Convert Kbytes to bytes */
   }
 
   if (!WIN32_FLG) {
@@ -524,7 +519,7 @@ labrea_init (int argc, char **argv)
   if (usernet) {
     /* If mask specified with -m parameter, then use it */
     if (cap_mask.addr_type != ADDR_TYPE_NONE)
-    	addr_mtob(&(cap_mask.addr_ip), IP_ADDR_LEN, &(cap_net.addr_bits));
+      addr_mtob(&(cap_mask.addr_ip), IP_ADDR_LEN, &(cap_net.addr_bits));
   }
 
   if (usernet || man_host_info) {
@@ -597,11 +592,8 @@ labrea_init (int argc, char **argv)
    * Windows-specific checks
    */
   if (WIN32_FLG) {
-    if (io.adapter_num > 0)
-      util_print(VERBOSE, "WinPcap driver adapter %d will be used",
-		 io.adapter_num);
     if (io.intf_num > 0)
-      util_print(VERBOSE, "Libdnet interface %d will be used",
+      util_print(VERBOSE, "Winpcap device %d will be used",
 		 io.intf_num);
     if (strlen(ctl.syslog_server) > 0) {
       util_print(VERBOSE, "Syslog will be sent to %s, port %d",
@@ -640,8 +632,8 @@ labrea_init (int argc, char **argv)
 	       "Ports will be firewalled. No RST will be returned for excluded ports.");
 
   if (ctl.maxbw > 0) {
-    util_print(VERBOSE, "Connections will be captured in persist state up to %u bytes/second",
-	       ctl.maxbw);
+    util_print(VERBOSE, "Connections will be captured in persist state up to %u Kb/sec",
+	       ctl.maxbw << 3);
     if (ctl.logging & FL_LOG_BDWTH_SYSLOG)
       util_print(VERBOSE, "Bandwidth use will be logged every minute.");
   } else {

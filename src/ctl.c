@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  * 02111-1307, USA.
  *
- * $Id: ctl.c,v 1.2 2003/09/09 20:49:24 lorgor Exp $ */
+ * $Id: ctl.c,v 1.3 2003/09/12 21:23:39 lorgor Exp $ */
 
 #include "config.h"
 

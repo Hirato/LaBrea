@@ -20,7 +20,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  * 02111-1307, USA.
  *
- * $Id: lbio.c,v 1.1 2003/01/09 18:13:19 lorgor Exp $ */
+ * $Id: lbio.c,v 1.2 2003/09/12 21:23:39 lorgor Exp $ */
 
 
 #include "config.h"
@@ -63,12 +63,12 @@
  * returns 0	no errors detected
  *		-1		error when opening interfaces
  *
- * 2002-10-5 Note that libdnet 2.5 requires WinPcap 2.3. In this version, you
+ * 2002-10-5 Note that libdnet 1.7 requires WinPcap 2.3. In this version, you
  * have to interface directly with the packet driver to get the list of 
  * devices. In WinPcap 3.0, the pcap_findalldevs function is introduced, and
  * this code should be updated to use the new function.
  *
- * This code was adapted from WinPcap 2.3 examples and libdnet 1.5.
+ * This code was adapted from WinPcap 2.3 examples and libdnet 1.7.
  */
 
 int
@@ -81,7 +81,7 @@ build_pcap_adapter_list (void)
 
   /* Unicode strings for WinNT and later */
   WCHAR		adapter_list[MAX_NUM_ADAPTER*2*BUFSIZE];
-				/* string that contains a list of the network adapters */
+  /* string that contains a list of the network adapters */
   WCHAR 		*name;		/* Name of adapter in list */
 
   /* Ascii strings for Win98 / WinME */
@@ -98,7 +98,7 @@ build_pcap_adapter_list (void)
     return(-1);
   }
 
-  util_print(VERBOSE,"WinPcap library version:%s\n", PacketGetVersion());
+  util_print(VERBOSE,"WinPcap library version: %s\n", PacketGetVersion());
 
   /* 
    * Get information from WinPcap.about driver adapters.
@@ -181,25 +181,17 @@ open_winpcap_adapter()
     return(-1);
   }
 
-  j = io.adapter_num <= 0 ?  0 : io.adapter_num - 1;
+  j = io.intf_num <= 0 ?  0 : io.intf_num - 1;
   /* default is the first adapter in the list */
 
   util_print(VERBOSE,"Using WinPcap adapter %d\n   %s\n    %s",
-	     io.adapter_num, io.adapter_name_list[j], io.adapter_desc_list[j]);
+	     j+1, io.adapter_name_list[j], io.adapter_desc_list[j]);
 
   /*
    * Open the WinPcap device for sniffing
    */
   if ((io.pcap = pcap_open(io.adapter_name_list[j])) == NULL) {
     warnx("*** Couldn't open WinPcap adapter" );
-    return(-1);
-  }
-
-  /*
-   * Open libdnet link interface for raw packet output
-   */
-  if ((io.eth = eth_open(io.adapter_desc_list[j])) == NULL ) {
-    warnx("*** Couldn't open libdnet raw link device");
     return(-1);
   }
 #endif
@@ -236,34 +228,6 @@ _find_intf(const struct intf_entry *entry, void *arg)
   return (FALSE);		/* Keep on looking */
 }
 
-/*
- * Windows-only Callback rtn for libdnet's intf_loop
- *
- * Called once for each interface, and choses n-th interface.
- *
- */
-
-static int
-_find_intf_win(const struct intf_entry *entry, void *arg)
-{
-  int *n = (int *)arg;
-  (*n)--;
-
-  if (*n == 0) {
-    /*
-     * We've found an interface but intf_loop returns
-     * an ephemeral intf_entry in the stack
-     * so must copy it to more permanent storage
-     */
-    io.ifent = (struct intf_entry *)io.buf;
-    assert(entry->intf_len <= sizeof(io.buf));
-    memcpy(io.ifent, entry, entry->intf_len);
-    return (TRUE);
-  }
-  else
-    return (FALSE);
-}
-
 
 /* 
  * Initialize IO
@@ -275,7 +239,6 @@ void
 lbio_init(u_char *dev, u_char *texpr)
 {
   struct addr loopback;
-  int dev_cnt = io.intf_num;
   ip_addr_t ip_tmp = 0;		/* For construction of ARP Who-Has */
   
   io.rnd = rand_open();		/* Initialize the libdnet random # generation */
@@ -288,88 +251,48 @@ lbio_init(u_char *dev, u_char *texpr)
 
   addr_aton(LOOPBACK, &loopback);
 
-  /*
-   * Windows-specific device initialisation
-   */
-  if (WIN32_FLG) {
+  if (strlen(dev) > 0) {
+    /*
+     * User-specified device name
+     */
+    io.ifent = (struct intf_entry *)io.buf;
+    io.ifent->intf_len = sizeof(io.buf);
+    strlcpy(io.ifent->intf_name, dev, sizeof(io.ifent->intf_name));
 
-    if(io.myip == 0) {
-      if (io.intf_num > 0){
-	/*
-	 * Open user-specified interface
-	 */
-	if (intf_loop(io.intf, _find_intf_win, &dev_cnt) <= 0) {
-	  warnx("*** Unable to get information for libdnet interface %d\n",
-		io.intf_num);
-	  util_clean_exit(1);
-	}
-	if (io.ifent->intf_addr.addr_type == ADDR_TYPE_IP &&
-	    io.ifent->intf_addr.addr_ip == loopback.addr_ip) {
-	  warnx("*** The Loopback interface 127.0.0.1 cannot be used");
-	  util_clean_exit(1);
-	}
-      } else {
-	/*
-	 * Loop through the interfaces looking for one that is:
-	 *	- not a loopback
-	 *	- Ethernet
-	 */
-	if (intf_loop(io.intf, _find_intf, &loopback) <= 0) {
-	  warnx("*** Unable to find a suitable interface to open\n");
-	  util_clean_exit(1);
-	}
-      }
-      util_print(VERBOSE,
-		 "Libdnet interface to be used to determine IP / MAC addresses:\n   %s",
-		 io.ifent->intf_name);
+    if (intf_get(io.intf, io.ifent) < 0) {
+      warnx("*** Unable to get information for interface %s\n", io.ifent->intf_name);
+      util_clean_exit(1);
     }
+  } else {
+    /*
+     * Loop through the interfaces looking for one that is:
+     *  - not a loopback
+     *	- Ethernet
+     */
+    if (intf_loop(io.intf, _find_intf, &loopback) <= 0) {
+      warnx("*** Unable to find a suitable interface to open\n");
+      util_clean_exit(1);
+    } 
+  }
 
-    /* open WinPcap device */
-	
+  /* open link interface for raw packet output */
+  if ((io.eth = eth_open(io.ifent->intf_name)) == NULL ) {
+    warnx("*** Couldn't open libdnet link interface");
+    util_clean_exit(1);
+  }
+
+  if (WIN32_FLG) { /* open WinPcap device */
     if (open_winpcap_adapter() < 0)
       util_clean_exit(1);
 
-    /*
-     * Unix-specific device initialisation
-     */
-  } else {
-    if (strlen(dev) > 0) {
-      /*
-       * User-specified device name
-       */
-      io.ifent = (struct intf_entry *)io.buf;
-      io.ifent->intf_len = sizeof(io.buf);
-      strlcpy(io.ifent->intf_name, dev, sizeof(io.ifent->intf_name));
-
-      if (intf_get(io.intf, io.ifent) < 0) {
-	warnx("*** Unable to get information for interface %s\n", io.ifent->intf_name);
-	util_clean_exit(1);
-      }
-    } else {
-      /*
-       * Loop through the interfaces looking for one that is:
-       *  - not a loopback
-       *	- Ethernet
-       */
-      if (intf_loop(io.intf, _find_intf, &loopback) <= 0) {
-	warnx("*** Unable to find a suitable interface to open\n");
-	util_clean_exit(1);
-      } 
-    }
-
-    /* open our pcap device for sniffing */
+  } else { /* open Unix pcap device for sniffing */
     if ((io.pcap = pcap_open(io.ifent->intf_name)) == NULL) {
       warnx("*** Couldn't open pcap device for sniffing" );
       util_clean_exit(1);
     }
-
-    /* open link interface for raw packet output */
-    if ((io.eth = eth_open(io.ifent->intf_name)) == NULL ) {
-      warnx("*** Couldn't open libdnet link interface");
-      util_clean_exit(1);
-    }
-    util_print(NORMAL, "Initiated on interface: %s", io.ifent->intf_name);
   }
+
+  util_print(NORMAL, "Initiated on interface: %s", io.ifent->intf_name);
 
   /*
    * If the host system IP address is not set yet,
@@ -794,15 +717,15 @@ lbio_print_libdnet_intf_list (void)
    */
 
   printf(
-	 "*** Libdnet interface list ***\n\n"
-	 "* In order to determine the interface's IP and MAC addresses,\n"
+	 "\n*** Libdnet interface list ***\n\n"
+	 "* Labrea uses libdnet to write packets, determine IP addr, etc.\n"
 	 "Labrea looks through the following list for the the first Ethernet\n"
 	 "interface that is not the loopback interface.\n"
-	 "* To override this behaviour and select interface m, specify:\n"
-	 "			-j m\n"
+	 "* To override this behaviour and select interface \"ethn\", specify:\n"
+	 "			-i ethn\n"
 	 "or manually specify the values to use:\n"
 	 "           -I nnn.nnn.nnn.nnn -E xx:xx:xx:xx\n"
-	 "* Note that the interface and the driver adapter MUST refer to the\n"
+	 "* Note that the libdnet interface and the Winpcap device MUST refer to the\n"
 	 "same physical NIC (network interface card).\n\n");
   if ((intf = intf_open()) == NULL)
     err(1, "intf_open");
@@ -833,14 +756,15 @@ lbio_print_pcap_adapter_list (void)
   int			i=0;
 
   printf(
-	 "\n*** WinPcap driver adapter list\n\n"
-	 "* Labrea uses the driver adapter to access the network.\n"
-	 "The default is to use the first adapter in the list.\n"
-	 "To override this behaviour and select adapter \"n\", specify\n"
-	 "		-i n\n");
+	 "\n*** WinPcap device list\n\n"
+	 "* Labrea uses Winpcap to sniff the network.\n"
+	 "The following is the list of Winpcap devices.\n"
+	 "The default is to use the first device in the list.\n"
+	 "* To override this behaviour and select device \"n\", specify\n"
+	 "		-j n\n\n");
 
   if (build_pcap_adapter_list() < 0) {
-    warnx("*** Unable to build WinPcap driver adapter list");
+    warnx("*** Unable to build WinPcap device list");
     return(-1);
   }
   /*
@@ -850,10 +774,10 @@ lbio_print_pcap_adapter_list (void)
     printf("%d- %s\n\t%s\n",i+1,io.adapter_name_list[i],
 	   io.adapter_desc_list[i]);
     if (i == 0)
-      printf("===> Default adapter\n\n");
+      printf("===> Default device\n\n");
   }
 
-  printf("*** End of WinPcap Adapter list ***\n\n");
+  printf("*** End of WinPcap device list ***\n\n");
 #endif
   return (0);
 }

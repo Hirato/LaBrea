@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * $Id: labrea.h,v 1.1 2003/01/09 18:13:19 lorgor Exp $
+ * $Id: labrea.h,v 1.2 2003/09/12 21:23:39 lorgor Exp $
 */
 
 #ifndef LABREA_H
@@ -69,9 +69,10 @@ enum sizes {
   BUFSIZE = 1024,		/* General character buffer size */
   BPFSIZE = 65536,		/* Holds entire bpf filter */
   IP_INP_SIZE = 20,		/* Max length of IP addr when input: xxx.xxx.xxx.xxx/nn */
+  ONE_K = 1024,			/* For conversions */
   HIST_MIN = 4,			/* Keep 5 minutes of bandwidth history */
-  MAX_NUM_ADAPTER = 10,	/* Windows only: max num of adapters in list */
-  PGM_NAME_SIZE = 50			/* Ident tag for syslog */
+  MAX_NUM_ADAPTER = 10,         /* Windows only: max num of adapters in list */
+  PGM_NAME_SIZE = 50		/* Ident tag for syslog */
 };
 
 #ifndef MAXHOSTNAMELEN
@@ -91,6 +92,7 @@ enum port_constants {
 enum perf_constants {
   THROTTLE_WINDOW_ORD = 10,	/* Window size since if no max b/w specified */
   THROTTLE_WINDOW_SLOW = 3,	/* Window size if b/w limited */
+  MAX_BW = 1048576,		/* Maximum bandwidth = 1 Gbyte/sec */
   MAX_ARP_BURST = 85,		/* During arp sweeps, not more than 85 at one time */
   MAX_SUBNET_SIZE = 1024	/* Turn off arp sweep for subnets bigger than this */
 };

@@ -76,7 +76,7 @@
 
  LaBrea requires both libdnet and libpcap to compile.
 
- V2.5.1 of LaBrea runs with libdnet 1.6. A reasonable level of
+ V2.5 of LaBrea was developed with libdnet 1.7. A reasonable level of
  libpcap (>= 0.6.2) should work fine.
 
  Normal installation will be:
@@ -85,7 +85,7 @@
 	make
 	make install		(as root) 
 
- LaBrea has been compiled and tested on Solaris, Linux, OpenBsd.
+ LaBrea has been compiled and tested on Solaris, Linux, FreeBsd.
 
 
 -- Building on windows systems --
@@ -102,12 +102,13 @@
 	make
 	make install
 
- LaBrea has been tested on Win98 / WinME / WinXP.
+ LaBrea has been tested on Win98 / Win2K.
 
 -- Gotchas --
 
- As of 2002-12-11, WinPcap does not officially support multi-CPU
- configurations. YMMV
+ Also as of 2002-12-11, WinPcap does not officially support multi-CPU
+ configurations. The newest version of WinPcap apparently does (V3.0)
+ but libdnet support isn't there yet. YMMV
 
  If you are successful at building it on another platform, please let
  us know!
@@ -346,4 +347,4 @@ operates.
 
 
 
-$Id: INSTALL,v 1.2 2003/09/09 20:49:24 lorgor Exp $
+$Id: INSTALL,v 1.3 2003/09/12 21:23:39 lorgor Exp $

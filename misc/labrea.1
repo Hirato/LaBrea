@@ -1,7 +1,7 @@
 .\"
 .\" Copyright (c) 2002 Tom Liston <tliston@premmag.com>
 .\"
-.\" $Id: labrea.1,v 1.1 2003/01/09 18:13:19 lorgor Exp $
+.\" $Id: labrea.1,v 1.2 2003/09/12 21:23:39 lorgor Exp $
 .\"
 .TH LABREA 1
 .SH NAME
@@ -39,7 +39,7 @@ labrea \- Honeypot for incoming IP connection attempts
 [\fB-I --ip-addr nnn.nnn.nnn.nnn\fR]
 [\fB-E --my-mac-addr xx:xx:xx:xx:xx:xx\fR]
 [\fB-D --list-interfaces\fR]
-[\fB-j --libdnet-intf nn\fR]
+[\fB-j --winpcap-dev nn\fR]
 [\fB--syslog-server nnn.nnn.nnn.nnn\fR]
 [\fB--syslog-port nnn\fR]
 .LP
@@ -63,13 +63,6 @@ accepts the following options:
 .BI "-i --device " interface
 By default, labrea uses the first ethernet interface. This forces
 labrea to use the specified interface.
-.RS
-.LP
-On Windows systems, specify "-i nn" where "nn" is the nth entry in the
-WinPcap device driver list. See the
-.I -D
-parameter for more information.
-.RE
 .TP
 .BR  "-n --network " xxx.xxx.xxx.xxx[/nn]
 labrea normally pulls information about the netblock from the IP
@@ -223,8 +216,8 @@ On Windows systems, print the list of WinPcap devices, followed by the
 list of the libdnet interfaces. Note that each API has a different
 nomenclature for the underlying NIC.
 .TP
-.BR "-j --libdnet-intf " \fInn\fR
-On windows systems, select the nth libdnet interface in the list.
+.BR "-j --winpcap-dev " \fInn\fR
+On windows systems, select the nth winpcap device in the list.
 .SH NOTES
 .SS Basic Warning about use of labrea
 .I You must understand this:

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2001 Dug Song <dugsong@monkey.org>
  *
- * $Id: pcaputil.h,v 1.1 2003/01/09 18:13:19 lorgor Exp $
+ * $Id: pcaputil.h,v 1.2 2003/09/12 21:23:39 lorgor Exp $
  */
 
 #ifndef PCAPUTIL_H

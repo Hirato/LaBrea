@@ -6,7 +6,7 @@
  *
  * Note that data in struct pkt is kept in byte network order
  *
- * $Id: pkt.h,v 1.1 2003/01/09 18:13:19 lorgor Exp $
+ * $Id: pkt.h,v 1.2 2003/09/12 21:23:39 lorgor Exp $
  */
 
 #ifndef PKT_H

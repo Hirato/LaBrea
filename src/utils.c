@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * $Id: utils.c,v 1.2 2003/09/09 20:49:24 lorgor Exp $
+ * $Id: utils.c,v 1.3 2003/09/12 21:23:39 lorgor Exp $
  */
 
 #include "config.h"
@@ -375,15 +375,15 @@ timer_pop(void) {
   ctl.totalbytes -= ctl.past[HIST_MIN];
   for(i = HIST_MIN; i; i--)
     ctl.past[i] = ctl.past[i - 1];
-  ctl.past[0] = ctl.currentbytes;
+  ctl.past[0] = ctl.currentbytes / ONE_K; /* Convert to Kbytes */
   ctl.totalbytes += ctl.past[0];
   ctl.currentbytes = 0;
 
-  /* Avg Bandwidth = Total # bytes / total sec of hist */
+  /* Avg Bandwidth = Total # Kbytes / total sec of hist */
   avgbw = ctl.totalbytes / ((HIST_MIN+1)*60);
 
   if (ctl.logging & FL_LOG_BDWTH_SYSLOG) {
-    util_print(NORMAL, "Current average bw: %i (bytes/sec)", avgbw);
+    util_print(NORMAL, "Current average bw: %i (Kb/sec)", avgbw << 3);
   }
      
   /*
@@ -404,8 +404,9 @@ timer_pop(void) {
      * limiting new connections that we'll allow to be captured per
      * minute
      */
-    ctl.newthisminute = (ctl.maxbw > avgbw) ?  (ctl.maxbw - avgbw) : 0;
-
+    ctl.newthisminute = (ctl.maxbw > avgbw) ?  (ctl.maxbw - avgbw) * ONE_K : 0;
+  		/* Value is converted from Kbytes to bytes  */
+    
   /*
    * When a machine sends out a gratuitous ARP to announce its
    * presence, then it is placed on the "new kids" list.
@@ -581,7 +582,6 @@ util_set_signal_handlers(void)
   signal(SIGUSR1, catch_sig_toggle_logging);
 #endif
 }
-
 
 /*
  * set up the timer pop

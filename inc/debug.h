@@ -1,4 +1,4 @@
-/* $Id: debug.h,v 1.1 2003/01/09 18:13:19 lorgor Exp $ */
+/* $Id: debug.h,v 1.2 2003/09/12 21:23:39 lorgor Exp $ */
 /*
 ** Copyright (C) 1998-2002 Martin Roesch <roesch@sourcefire.com>
 **
@@ -16,7 +16,7 @@
 ** along with this program; if not, write to the Free Software
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 **
-** $Id: debug.h,v 1.1 2003/01/09 18:13:19 lorgor Exp $
+** $Id: debug.h,v 1.2 2003/09/12 21:23:39 lorgor Exp $
 */
 
 

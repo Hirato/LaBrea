@@ -76,6 +76,9 @@ The long answer:
       the "wrong" one, you can use this option to direct it to the
       correct one. Use a device name ("eth0") as a parameter.
 
+      On Windows, you can use the "-D" parameter to see the list of
+      interfaces is recognized.
+
 
 --quiet (-q)				: Do not report odd
 					  (out of netblock) ARPs
@@ -231,8 +234,11 @@ The long answer:
 				      active connects
 
       "Soft Restart" mode. What this does is to hold off on any new
-      captures for 5 minutes, to let things settle and to get the
-      bandwidth calculations going.
+      attempt to force incoming sessions into the "persist" state for
+      5 minutes. This lets things settle down and gets the bandwidth
+      calculations going. Note that during this period, IPs will still
+      be captured, pings will still be responded to (if specified),
+      etc.
   
 
       After I changed some stuff in LaBrea, I thought I would be
@@ -260,7 +266,10 @@ The long answer:
 				      connect attempts
 
       LaBrea will permanently capture connect attempts within the
-      limit of the maximum data rate specified (in bytes/sec).
+      limit of the maximum data rate specified (in Kbits/sec).
+
+      This value is expressed in KiloBytes/Sec. (This is a change from
+      previous versions.)
 
       This is UNBELIEVABLY COOL (if I do say so myself...)  If you
       specify this flag and a maximum bandwidth, several things will
@@ -276,7 +285,7 @@ The long answer:
 
       Running unchecked, this could have a detrimental effect on your
       bandwidth, so LaBrea will make every effort to limit itself to
-      the maximum bandwidth that you specify (in bytes/second).  If it
+      the maximum bandwidth that you specify (in Kb/sec).  If it
       can't capture a connection, LaBrea will still tarpit it.  Note:
       It'll stay pretty NEAR your MAXBW number... YMMV.
 
@@ -445,8 +454,8 @@ The long answer:
 
       LaBrea uses two different APIs to interact with the NIC (network
       card): libdnet and WinPcap. The libdnet intf API is used to
-      extract information from the NIC. The WinPcap API is used to
-      generate packets.
+      extract information from the NIC and to generate packets. The
+      WinPcap API is used to sniff.
 
       Unfortunately, these two APIs have different nomenclatures for
       the same underlying NIC.
@@ -457,38 +466,23 @@ The long answer:
 
       In each list, the interface by default is indicated.
 
+      You get to pick an interface from each list if the defaults are
+      not right. Use the "-i" parameter (see above) to pick the
+      libdnet interface. See the following parameter for the WinPcap
+      device.
 
---device (-i) nn		 : Specify WinPcap interface 
---libdnet-intf (-j) nn		 : Specify libdnet interface
 
-      LaBrea uses libdnet to determine the interface's IP and MAC
-      addresses.
-       
-      By default, LaBrea will use the first Ethernet interface that is
-      not the loopback interface (IP 127.0.0.1).
-       
-      If the default interface is not the right one, then the "-j"
-      parameter can be used to specify which one to use. To see the
-      list of interfaces, use the "-D" parameter.
+--winpcap-dev (-j) nn		 : Specify WinPcap device 
 
-      For instance, "-j 3" says to use the 3rd interface in the
-      libdnet list.
-
-      On some old Win98 systems, the libdnet intf API might not work
-      at all. In this case, you have to manually specify the NIC's IP
-      and MAC addresses. (See the -I, -E parameters.)
-
-      ----------------------------
-
-      The WinPcap device driver is used for packet generation.
+      The WinPcap device driver is used for packet sniffing.
 
       By default, the first device in the WinPcap list is the one that
       is used.
 
-      The "-i" parameter can be used to specify another entry in the
+      The "-j" parameter can be used to specify another entry in the
       list.
 
-      For instance, "-i 2" says to use the 2cd entry in the WinPcap
+      For instance, "-j 2" says to use the 2cd entry in the WinPcap
       device driver list.
 
       ----------------------------
@@ -916,4 +910,4 @@ The long answer:
  questions (and actually answering most of them) and for letting me
  bounce ideas off him.
 
-$Id: README,v 1.1 2003/01/09 18:13:19 lorgor Exp $
+$Id: README,v 1.2 2003/09/12 21:23:39 lorgor Exp $

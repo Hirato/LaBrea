@@ -28,7 +28,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: pcaputil.c,v 1.1 2003/01/09 18:13:19 lorgor Exp $
+ * $Id: pcaputil.c,v 1.2 2003/09/12 21:23:39 lorgor Exp $
  */
 
 
