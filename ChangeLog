@@ -1,3 +1,8 @@
+2003-10-29  moi-meme  <asdfg@localhost.my.domain>
+
+	* src/utils.c (util_alarm): Move definition of windows dummy
+	variable to avoid compile error.
+
 2003-09-09  moi-meme  <asdfg@localhost.my.domain>
 
 	* src/ctl.c (ctl_init_arrays):  Remove call to sleep since not

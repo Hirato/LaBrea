@@ -3,11 +3,11 @@ dnl configure.in
 dnl
 dnl Copyright (c) 2001 Dug Song <dugsong@monkey.org>
 dnl
-dnl $Id: configure.in,v 1.3 2003/09/12 21:23:39 lorgor Exp $
+dnl $Id: configure.in,v 1.4 2003/10/30 19:44:30 lorgor Exp $
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT(LaBrea,2.5-beta-2,lorgor@users.sourceforge.net,labrea)
+AC_INIT(LaBrea,2.5-stable-1,lorgor@users.sourceforge.net,labrea)
 AC_CONFIG_SRCDIR(src/labrea.c)
 
 AC_CANONICAL_HOST
