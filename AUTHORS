@@ -1,0 +1,26 @@
+AUTHORS / CREDITS
+
+Tom Liston <tliston@premmag.com> is the father of LaBrea.
+
+This version was based on LaBrea 2.4 beta 3 source. Loren Gordon
+<loren.gordon@teleglobe.ca> was a major contributor.
+
+Dug Song wrote the libdnet and fragroute packages. This code is
+copyright Dug Song <dugsong@monkey.org>. See the DSong-license for
+details. Parts of fragroute (pkt, pcaputil, bget, strlcpy) were used
+in this code.
+
+
+** From Tom Liston's original code **
+
+Many thanks to Donald Smith for suggestions and improvements and to
+Rick Downes of Radsoft for his help and encouragement.
+
+Additional thanks to the following beta testers for all their help:
+Barton Bruce, Ben Curran, Andrew Daviel, Bill Dodd, Becky Pinkard, and
+"Micropterus Salmoides".  Also, many thanks to Matthew Franz for his
+help in putting together the Trinux package.  Thanks also to Anders
+Reed Mohn for his suggestions.
+
+
+## $Id: AUTHORS,v 1.1 2003/01/09 18:13:19 lorgor Exp $

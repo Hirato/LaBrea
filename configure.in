@@ -1,0 +1,217 @@
+dnl 
+dnl configure.in
+dnl
+dnl Copyright (c) 2001 Dug Song <dugsong@monkey.org>
+dnl
+dnl $Id: configure.in,v 1.1 2003/01/09 18:13:19 lorgor Exp $
+
+dnl Process this file with autoconf to produce a configure script.
+
+AC_INIT(LaBrea,2.5-beta-1,lorgor@users.sourceforge.net,labrea)
+AC_CONFIG_SRCDIR(src/labrea.c)
+
+AC_CANONICAL_HOST
+
+AM_INIT_AUTOMAKE(check-news dist-zip no-define 1.6.1)
+
+AM_CONFIG_HEADER(config.h)
+
+dnl Initialize prefix.
+if test "$prefix" = "NONE"; then
+   prefix="/usr/local"
+fi
+
+dnl Check for system type
+AC_MSG_CHECKING(for target os)
+case $host in
+	*-*-cygwin*)	LB_CYGWIN="yes"
+					;;
+	*-*-solaris*)	AC_DEFINE(LB_SYSTEM_IS_SUN,1,
+					[Define if system is Solaris])
+					LB_CYGWIN="no"
+					;;
+	*)				LB_CYGWIN="no"
+					;;
+esac
+AC_MSG_RESULT($host_os)
+
+
+dnl Checks for programs.
+AC_PROG_MAKE_SET
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_RANLIB
+
+
+dnl Checks for libraries.
+
+
+dnl XXX - we need MingW32 under Cygwin for win32
+if test "$LB_CYGWIN" = yes ; then
+   if test -d /usr/include/mingw; then
+      CPPFLAGS="$CPPFLAGS -mno-cygwin"
+      CFLAGS="$CFLAGS -mno-cygwin"
+      AC_DEFINE(WIN32_LEAN_AND_MEAN, 1, 
+          [Define for faster code generation.])
+      AC_LIBOBJ(syslog)
+   else
+      AC_MSG_ERROR([need MingW32 package to build under Cygwin])
+   fi
+fi
+
+
+dnl Checks for libpcap
+AC_MSG_CHECKING(for libpcap)
+AC_ARG_WITH(libpcap,
+[  --with-libpcap=DIR      use libpcap in DIR],
+[ case "$withval" in
+  yes|no)
+     AC_MSG_RESULT(no)
+     ;;
+  *)
+     AC_MSG_RESULT($withval)
+     if test -f $withval/pcap.h -a -f $withval/libpcap.a; then
+        owd=`pwd`
+        if cd $withval; then withval=`pwd`; cd $owd; fi
+	PCAPINC="-I$withval -I$withval/bpf"
+	PCAPLIB="-L$withval -lpcap"
+     elif test -f $withval/include/pcap.h -a \
+	       -f $withval/include/net/bpf.h; then
+	owd=`pwd`
+	if cd $withval; then withval=`pwd`; cd $owd; fi
+	PCAPINC="-I$withval/include"
+	if test -f $withval/lib/libwpcap.a; then
+	   PCAPLIB="-L$withval/lib -lwpcap"
+	else
+	   PCAPLIB="-L$withval/lib -lpcap"
+        fi
+     else
+        AC_ERROR(pcap.h, net/bpf.h, or libpcap.a not found in $withval)
+     fi
+     ;;
+  esac ],
+[ if test -f ${prefix}/include/pcap.h; then
+     PCAPINC="-I${prefix}/include"
+     if test -f ${prefix}/lib/libwpcap.a; then
+	PCAPLIB="-L${prefix}/lib -lwpcap"
+     else
+        PCAPLIB="-L${prefix}/lib -lpcap"
+     fi
+  elif test -f /usr/include/pcap/pcap.h; then
+     PCAPINC="-I/usr/include/pcap"
+     PCAPLIB="-lpcap"
+  elif test -f /usr/include/pcap.h; then
+     PCAPLIB="-lpcap"
+  else
+     AC_MSG_RESULT(no)
+     AC_ERROR(libpcap not found)
+  fi
+  AC_MSG_RESULT(yes) ]
+)
+AC_SUBST(PCAPINC)
+AC_SUBST(PCAPLIB)
+
+dnl Checks for (installed) libdnet
+AC_MSG_CHECKING(for libdnet)
+AC_ARG_WITH(libdnet,
+[  --with-libdnet=DIR      use libdnet in DIR],
+[ case "$withval" in
+  yes|no)
+     AC_MSG_RESULT(no)
+     ;;
+  *)
+     AC_MSG_RESULT($withval)
+     if test -f $withval/src/libdnet.a; then
+	DNETINC="-I$withval/include"
+	DNETLIB="-L$withval/src -ldnet `$withval/dnet-config --libs`"
+     elif test -x $withval/bin/dnet-config; then
+	DNETINC="`$withval/bin/dnet-config --cflags`"
+	DNETLIB="`$withval/bin/dnet-config --libs`"
+     else
+        AC_ERROR(dnet-config not found in $withval/bin)
+     fi
+     ;;
+  esac ],
+[ if test -x ${prefix}/bin/dnet-config; then
+     DNETINC="`${prefix}/bin/dnet-config --cflags`"
+     DNETLIB="`${prefix}/bin/dnet-config --libs`"
+  else
+     AC_MSG_RESULT(no)
+     AC_ERROR(libdnet not found)
+  fi
+  AC_MSG_RESULT(yes) ]
+)
+AC_SUBST(DNETINC)
+AC_SUBST(DNETLIB)
+
+dnl Checks for header files
+AC_HEADER_STDC
+AC_CHECK_HEADERS(fcntl.h getopt.h err.h)
+AC_CHECK_HEADERS(sys/ioctl.h syslog.h time.h unistd.h)
+AC_CHECK_HEADERS(windows.h winsock.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_OFF_T
+AC_TYPE_PID_T
+AC_TYPE_SIZE_T
+AC_HEADER_TIME
+AC_STRUCT_TM
+AC_PROG_GCC_TRADITIONAL
+if test "$GCC" = yes; then
+   CFLAGS="$CFLAGS -Wall"
+fi
+
+dnl Checks for library functions.
+AC_FUNC_MEMCMP
+AC_TYPE_SIGNAL
+AC_CHECK_FUNCS(strstr strtol)
+AC_CHECK_FUNC(strlcpy,,
+	[AC_LIBOBJ(strlcpy)
+	AC_DEFINE(DONT_HAVE_STRLCPY,1,
+	[Define if strlcpy is missing])])
+
+dnl If not GNU, then replace getopt
+AC_MSG_CHECKING(for gnu getopt support)
+case $host in
+	*-*-*gnu*) 	AC_MSG_RESULT(yes)
+				;;
+	*) 		AC_LIBOBJ(getopt)
+			AC_LIBOBJ(getopt1)
+	   		AC_MSG_RESULT([no - supplying missing getopt]);;
+esac
+
+dnl Set system-wide configuration file.
+if test "$LB_CYGWIN" = yes ; then
+	  LABREA_CONF="LaBrea.cfg"
+   else
+	  LABREA_CONF=`eval echo ${sysconfdir}/labrea.conf`      
+fi
+AC_SUBST(LABREA_CONF)
+AC_DEFINE_UNQUOTED(LABREA_CONF, "$LABREA_CONF",
+	[Location of configuration file.])
+
+dnl Set debug output
+AC_MSG_CHECKING(if debug should be enabled)
+AC_ARG_ENABLE(debug,
+[  --enable-debug          enable debugging options (bugreports and developers only)],
+                [ AC_DEFINE(DEBUG_LB,1,[Turn on debugging])
+				  AC_MSG_RESULT(yes)   ],
+				[ AC_MSG_RESULT(no)    ])
+
+
+dnl From old accconfig.h file
+AH_BOTTOM([
+
+/* Extra includes.  */
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
+#ifdef DONT_HAVE_STRLCPY
+size_t  strlcpy(char *, const char *, size_t);
+#endif
+])
+
+AC_OUTPUT(Makefile src/Makefile inc/Makefile misc/Makefile)

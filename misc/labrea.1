@@ -1,0 +1,355 @@
+.\"
+.\" Copyright (c) 2002 Tom Liston <tliston@premmag.com>
+.\"
+.\" $Id: labrea.1,v 1.1 2003/01/09 18:13:19 lorgor Exp $
+.\"
+.TH LABREA 1
+.SH NAME
+labrea \- Honeypot for incoming IP connection attempts
+.SH SYNOPSIS
+\fBlabrea\fR [\fB-i --device INTERFACE\fR]
+[\fB-n --network nnn.nnn.nnn.nnn[/nn]\fR]
+[\fB-m --mask nnn.nnn.nnn.nnn\fR]
+[\fB-t --throttle-size BYTES\fR]
+[\fB-p --max-rate RATE \fR]
+[\fB-R --soft-restart\fR]
+[\fB-r --arp-timeout RATE\fR]
+[\fB-s --switch-safe\fR]
+[\fB-h --hard-capture\fR]
+[\fB-x --disable-capture\fR]
+[\fB-X --exclude-resolvable-ips\fR]
+[\fB-P --persist-mode-only\fR]
+[\fB-a --no-resp-synack\fR]
+[\fB-H --auto-hard-capture\fR]
+[\fB-f --no-resp-excluded-ports\fR]
+[\fB--no-arp-sweep\fR]
+[\fB--init-file FILE\fR]
+[\fB-F --bpf-file FILE\fR]
+[\fB-T --dry-run\fR]
+[\fB-d --foreground\fR]
+[\fB-o --log-to-stdout\fR]
+[\fB-O --log-timestamp-epoch\fR]
+[\fB-l --log-to-syslog\fR]
+[\fB-b --log-bandwidth\fR]
+[\fB-v --verbose\fR]
+[\fB-q --quiet\fR]
+[\fB-z --no-nag\fR]
+[\fB-? --usage --help \fR]
+[\fB-V --version\fR]
+[\fB-I --ip-addr nnn.nnn.nnn.nnn\fR]
+[\fB-E --my-mac-addr xx:xx:xx:xx:xx:xx\fR]
+[\fB-D --list-interfaces\fR]
+[\fB-j --libdnet-intf nn\fR]
+[\fB--syslog-server nnn.nnn.nnn.nnn\fR]
+[\fB--syslog-port nnn\fR]
+.LP
+[\fBBPF Filter\fR]
+.SH DESCRIPTION
+.B labrea
+creates virtual machines for unused IP addresses in the specified
+block of IP addresses.  LaBrea sits and listens for ARP "who-has"
+requests.
+.LP
+When an ARP request for a particular IP goes unanswered for
+longer than its "rate" setting (default: 3 seconds), labrea crafts an
+ARP reply that routes all traffic destined for the IP to a "bogus" MAC
+address.  labrea sniffs for TCP/IP traffic sent to that MAC
+address and then responds to any SYN packet with a SYN/ACK packet that
+it creates.
+.SH OPTIONS
+.B labrea
+accepts the following options:
+.TP
+.BI "-i --device " interface
+By default, labrea uses the first ethernet interface. This forces
+labrea to use the specified interface.
+.RS
+.LP
+On Windows systems, specify "-i nn" where "nn" is the nth entry in the
+WinPcap device driver list. See the
+.I -D
+parameter for more information.
+.RE
+.TP
+.BR  "-n --network " xxx.xxx.xxx.xxx[/nn]
+labrea normally pulls information about the netblock from the IP
+information assigned to the interface.  If labrea is run on an
+unconfigured interface (one without an assigned IP address), then use
+this option to specify the subnet to be captured.
+.RS
+.LP
+.I xxx.xxx.xxx.xxx
+is the network address.
+.I /nn
+is the subnet mask in CIDR notation. If the subnet mask is not
+specified here, then you must include the -m parameter.
+.RE
+.TP
+.BR  "-m --mask " xxx.xxx.xxx.xxx
+Another way to specify the network mask for the capture netblock. If
+this parameter is specified, then the -n parameter must also be
+specified.
+.TP
+.BR "-t --throttle-size " \fInn\fR
+Sets the TCP window advertisement
+to limit the amount of data sent to labrea. The number of data
+bytes to allow per packet is 
+.I nn
+bytes.
+.TP
+.BR "-p --max-rate " \fIrate\fR
+Connect attempts will be permanently captured by forcing the
+connection into a "persist" state (by closing the TCP window). In this
+state, the connection will not time out.  labrea will permanently
+capture connect attempts up to maximum bandwidth
+.I rate
+bytes.  If the specified bandwidth is exceeded, labrea will still
+tarpit the incoming connection (ie respond SYN/ACK to incoming SYN).
+.TP
+.BR "-R --soft-restart"
+New captures will be held off for 5 minutes to let bandwidth
+calculations progress. If a major scan hits just after startup, this
+prevents labrea from capturing too many connections.
+.TP
+.BR "-r --arp-timeout " \fIrate\fR
+Wait
+.I rate
+seconds after seeing incoming arp requests
+before capturing an IP address.
+.TP
+.BR "-s --switch-safe"
+When there is an incoming ARP request, specifies that labrea should
+send out an ARP request of its own for the same IP address. This is
+necessary for safe operation in a switched environment where one host
+does not necessarily see all the traffic on the switch.
+.TP
+.BR "-h --hard-capture "
+Once an IP address has been captured, then do not wait for a "-r"
+timeout for the next incoming ARP request.
+.TP
+.BR "-x --disable-capture"
+Do not capture IPs.
+.TP
+.BR "-X --exclude-resolvable-ips"
+On startup, attempt DNS resolution on all IPs within
+the capture netblock. Automatically exclude any IP that has a
+corresponding entry in the DNS. Be careful because this can generate a
+lot of DNS lookups if the capture subnet is large.
+.TP
+.BR "-P --persist-mode-only"
+Try to limit bandwidth use by doing only persist capturing. Note: This
+parameter has limited usefulness since below max b/w, the same
+exchange that leads to persist capture also has the side effect
+of tarpitting.
+.TP
+.BR "-a --no-resp-synack"
+By default, the LaBrea virtual hosts respond to SYN/ACK with RST, and
+answer Pings. Disables this behaviour.
+.TP
+.BR "-H --auto-hard-capture"
+Mark all non-excluded and all non-hardexcluded IPs as being hard
+captured. See 
+.B labrea.conf(5)
+for more information. This parameter should be used
+.I with caution.
+.TP
+.BR "-f --no-resp-excluded-ports"
+Drop incoming connections to excluded ports. Normal default behaviour
+is to return a RST. Makes nmap-style scanning go much slower.
+.TP
+.BR "--no-arp-sweep"
+On startup, labrea sweeps the capture subnet with bursts of ARP
+requests in an attempt to locate all live machines. This parameter
+disables the sweep.
+.TP
+.BR "--init-file " \fIfile\fR
+Read the configuration from the specified
+.I file
+instead of from the default location.
+.TP
+.BR "-F --bpf-file " \fIfile\fR
+Designates the name of a file containing a BPF filter pointing to
+machines/ports to be tarpitted.  As with the command line BPF filter,
+these connections MUST be firewalled to DROP inbound traffic.
+.TP
+.BR "-T --dry-run"
+Do labrea initialization, including Dns excludes, parse of the
+configuration file, opening the network interface etc. Print
+diagnostic information, then exit.
+.TP
+.BR "-d --foreground"
+Do not detach the process. (Unix systems only)
+.TP
+.BR "-o --log-to-stdout"
+Send log information to stdout rather than to syslog.  This option
+also implies and sets the -d option (i.e. do not detach process).
+.TP
+.BR "-O --log-timestamp-epoch"
+Same as the "-o" option, but with time output in seconds since epoch
+to make it easier for logfile analysis programs.
+.TP
+.BR "-l --log-to-syslog"
+Send log messages to syslog.
+.TP
+.BR "-b --log-bandwidth"
+Log a message every minute detailing the current bandwidth consumption
+of the -p option (persist capture).
+.TP
+.BR "-v --verbose"
+Increase the verbosity of log messages. Use twice for more effect.
+.TP
+.BR "-q --quiet"
+Do not report arp requests for IPs that are not in the capture
+subnet.
+.TP
+.BR "-z --no-nag"
+Turn off the nag message. Before you do this, read the basic warning
+in the Notes section just below.
+.TP
+.BR "-? --usage --help"
+Print a help message and then exit.
+.TP
+.BR "-V --version"
+Print version information and exit.
+.TP
+.BR "-I --ip-addr " \fInnn.nnn.nnn.nnn\fR
+Manually specify the IP address for the labrea server.
+.TP
+.BR "-E --my-mac-addr " \fIxx:xx:xx:xx:xx:xx\fR
+Manually specify the MAC address of the labrea server's NIC.
+.TP
+.BR "-D --list-interfaces"
+On Windows systems, print the list of WinPcap devices, followed by the
+list of the libdnet interfaces. Note that each API has a different
+nomenclature for the underlying NIC.
+.TP
+.BR "-j --libdnet-intf " \fInn\fR
+On windows systems, select the nth libdnet interface in the list.
+.SH NOTES
+.SS Basic Warning about use of labrea
+.I You must understand this:
+As a default, LaBrea captures IP addresses by creating a "virtual
+machine" that sits on any UNUSED IP address that it sees. labrea has
+been carefully written and tested to transparently and peacefully
+operate in normal production environments but ...
+.LP
+.I There is a potential for problems
+if someone decides to start using one of the IP addresses that
+labrea has laid claim to, or if labrea erroneously decides that an IP
+address is free when in fact a real machine is already there.
+.SS Built-in protections
+labrea tries very hard to NEVER capture an IP that has a live machine
+sitting on it.
+.LP
+The following automatic mechanisms are provided:
+.RS
+.IP \(bu 
+If labrea sees a gratuitous ARP signalling the arrival of a new
+machine, it marks the corresponding IP address as excluded. ("new kids
+on the block" logic)
+.IP \(bu
+Each ARP response is noted and the corresponding IP address is
+marked as excluded.
+.IP \(bu
+At startup, a systematic sweep is done of the entire capture subnet
+(as long as the subnet is not too big). All IP addresses that respond
+are marked as excluded.
+.RE
+.LP
+Then there are ways of manually specifying the exclusion of certain
+addresses, and otherwise ensuring safe operation:
+.RS
+.IP \(bu
+The EXC config stmt allows specified IP addresses to be manually
+excluded from capture.
+.IP \(bu
+The IPI config stmt causes packets with the specified IP source
+address(es) to be ignored.
+.IP \(bu
+-s --switch-safe parameter causes mirroring of ARP requests in a
+switched environment
+.IP \(bu
+-X --exclude-resolvable-ips says to exclude all IPs that have a
+corresponding Dns entry
+.RE
+.LP
+.B Traffic rerouting:
+Despite all this, if labrea somehow receives traffic whose IP
+destination address belongs to a live machine, labrea will reroute
+that traffic to the real machine.
+.SS Size of the capture subnet
+.LP
+It is best to limit the capture subnet to the
+.I actual physical segment
+(VLAN, hub) where labrea is running.
+.LP
+In some configurations, where
+proxy arp is being used to determine routing, interface subnet masks
+can be quite large. (i.e. the "whole" network is "directly" attached to
+the physical segment). 
+.LP
+In this case, if labrea picks up the subnet mask from the interface,
+then labrea will inefficiently watch addresses that it has no hope of
+capturing. You should use the -m / -n parameters to manually limit the
+size of the capture subnet.
+.SS Other usage notes
+.HP
+The labrea virtual machines use a bogus MAC address of 0:0:f:ff:ff:ff
+.HP
+On certain older Windows systems, it may be necessary to manually
+specify the capture subnet.
+.HP
+On unix systems, KILL -USR1 will toggle logging off on and off.
+.HP
+On unix systems, KILL -HUP will cause labrea to reinitialize (and thus
+free captured IPs).
+.HP
+If the capture subnet is too large (greater than 1024 addresses), then
+labrea will not do an arp sweep.
+.SH BUGS
+.HP
+On some systems, if there is absolutely no traffic to sniff,
+pcap_dispatch will wait instead of timing out, making the program seem
+unresponsive. (Workaround: ping the labrea server to "wake" it up.)
+.HP
+If --exclude-resolvable-ips is enabled, and if the capture subnet is
+large (say class A /8), then a LOT of traffic will be generated to the
+Dns server.
+.SH EXAMPLES
+.IP 1)
+Run safely in a switched environment with very verbose logging. Don't
+respond to excluded ports. Log bandwidth usage from persist
+capturing. Exclude all IPs that are in the Dns. Run in the foreground,
+and log to stdout. Maximum capture bandwidth is 2 MB/sec. Use
+toto.conf as the initialisation file. Use network device "eth1"
+instead of the default device. Do a test run only - parse input,
+initialize, then exit.
+.LP
+.nf
+	  labrea --switch-safe --verbose -v  --no-resp-excluded-ports
+		--log-bandwidth --exclude-resolvable-ips --foreground
+		--log-to-stdout --max-rate 2000000 --init-file toto.conf
+		--device eth1 -z --dry-run
+		(one line)
+.fi
+.IP 2)
+Same thing with the short parameter style.
+.LP
+.nf
+	  labrea -z -s -v -v -f -b -X -d -o -p 2000000
+		--init-file toto.conf -i eth1 -T
+		(one line)
+.fi
+.SH FILES
+.TP
+.I /usr/local/etc/labrea.conf
+Default configuration file
+.TP
+.I /usr/local/sbin/labrea
+Program
+.SH SEE ALSO
+\fBlabrea.conf\fR(5)
+.SH AUTHOR
+Tom Liston <tliston@hackbusters.net>
+Bugs: lorgor@users.sourceforge.net or http://labrea.sourceforge.net
+

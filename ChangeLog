@@ -1,0 +1,155 @@
+2002-08-28    <asdfg@sora.localdomain>
+
+	* src/labrea_init.c (labrea_init): Turn off arp sweep if capture
+	subnet is too large. Also give a msg if subnet is large.
+
+2002-08-08    <asdfg@sora.localdomain>
+
+	* pkt_handler.c (pkt_handler): Set up a "new kid" elt if someone
+	replies to an arp request.
+
+2002-08-07    <asdfg@sora.localdomain>
+
+	* pkt_handler.c (ip_handler): Move firewalling code outside so as
+	to check dest port of all incoming TCP packets.
+
+2002-08-06    <asdfg@sora.localdomain>
+
+	* labrea_init.c (labrea_init): Change basic bpf filter to listen
+	to pkts *sent* to the bogus MAC address only.
+
+	* lbio.c (lbio_send_ip_pkt): Make responses appear to come from
+	bogus virtual machine.
+
+2002-08-05    <asdfg@sora.localdomain>
+
+	* labrea_init.c, pkt_handler.c, ctl.c, utils.c: Add arp sweep logic to detect live
+	IPs. Replace nk list by a ptr array.
+
+2002-07-31    <asdfg@sora.localdomain>
+
+	* labrea_init.c (labrea_init): Change test mode to log on stdout,
+	and not fork a child. Eliminate notes on Usage message to improve
+	readability.
+
+2002-07-29    <asdfg@sora.localdomain>
+
+	* pkt_handler.c (check_ip_ignore_or_new_kid): Remove culling
+	logic. Only cull inactive entries at each timer pop.
+
+2002-07-26    <asdfg@sora.localdomain>
+
+	* labrea_init.c (labrea_init): Now will accept long options. Add
+	read_number rtn to check input integer validity and prevent buffer
+	overflows. Add new --init-file option to allow user-specified
+	configuration file. Add code to parse all input before bailing
+	out.
+
+	* labrea.h: Move defines.h to this member. Move prototype
+	definitions to each individual include member (eg utils.h has
+	prototypes for util.c).
+
+	* includes.h: Move all includes to the corresonding .c source
+	where the include is needed. This simplifies housekeeping on includes.
+
+2002-07-25    <asdfg@sora.localdomain>
+
+	* pkt_handler.c (throttle_data): Change newthisminute to depend on
+	b/w from each connection and not just # of connections.
+
+	* ctl.h, utils.c, ctl.c: Change history array to depend on a
+	defined constant. Change code in same way.
+
+2002-07-07    <asdfg@sora.localdomain>
+
+	* pkt_handler.c (ip_handler): Change port firewalling logic to use
+	dynamic port algorithm. That is, ports don't respond to incoming
+	SYNs until they have seen sufficient activity. Then they start
+	giving back a SYN-ACK.
+
+	* defines.h: Change some defines to enums as per GNU coding
+	standards.
+
+	* utils.c: Move code to run "new kids" list into timer signal
+	handler so that code will be invoked on a regular basis, but not
+	at each arp. Also add code in same rtn for dynamic port logic so
+	that if a port shows activity, it will automatically be monitored.
+
+	* labrea.c: Change pcap_loop to pcap_dispatch so that mainline
+	signal handler code can be called regularly.
+
+2002-06-24    <asdfg@sora.localdomain>
+
+	* labrea_init.c (labrea_init): Change -n, -m parameters so that
+	can use libdnet input conversion. User has to enter net/mask in
+	standard CIDR format. -m parameter no longer supported.
+
+2002-06-19    <asdfg@sora.localdomain>
+
+	* Utils.c (CleanExit): Split into 2 rtn so that can generate error
+	code if terminating on error.
+
+2002-06-18    <asdfg@sora.localdomain>
+
+	* labrea.h, *.c: Move control flags and variables to main ctx
+	structure. Move signal handlers and utility routines to new util.c
+	member. Centralize logging.
+
+2002-06-17    <asdfg@sora.localdomain>
+
+	* PacketHandler.c, FixArrays.c, LaBrea.c, LaBrea_init.c: Replace
+	u_.. types by libdnet std types. Continue working on replacing
+	hardcoded pkt manipulation by libdnet structures and functions.
+	
+2002-06-15    <asdfg@sora.localdomain>
+
+	* pkt.h, pkt.c: Rework this code to eliminate fragroute-specific
+	stuff, and to handle arps.
+
+	* PacketHandler.c: Got rid of gotos.
+
+2002-06-14    <asdfg@sora.localdomain>
+
+	* PacketHandler.c, LaBrea.c, LaBrea_init.c, CleanExit.c: Replace
+	the kotb structure by a TAILQ (vrtq). Each virtual server element
+	is a structure of standard libdnet constructs.
+
+2002-06-04    <zoosoo@mybox.localdomain> loren.gordon@videotron.ca
+
+	* Data.c: Move constant strings back into pgms to improve
+	readability. This also prepares for possible gettext
+	internationalisation implementation. Eliminate the Data.c file.
+
+	* LaBrea.c: Use warnx to generate error messages. Eliminate goto
+	calls for error handling.
+
+	* LaBrea_init.c: Move initialisation stuff to new stand-alone
+	routine. Get rid of gotos.
+
+	* labrea.h: Move globals into this include file. Eliminate extern
+	declarations in functions.
+
+	* defines.h: Define file names to dynamically build msgs /
+	determine file names depending on op system.
+
+	* KOTB.c, IPHandler.c: Move functions into PacketHandler to
+	eliminate *.c includes.
+
+	* GoDaemon.c: Eliminate another *c include by moving this code to
+	LaBrea_init.c
+
+	* LaBrea.c, LaBrea_init.c, PacketHandler.c, FixArrays.c,
+	CleanExit.c: Start replacing libnet by libdnet. Replace randqueue1
+	logic by calls to libdnet rand fn.
+
+	* FixArrays.c: Eliminate code to parse old-style configuration
+	file syntax.
+
+	* defines.h: Change some defines to enum.
+
+	* FixArrays.c, LaBrea_init.c, PacketHandler.c: Add port_array
+	logic to dynamically add ports to be monitored. Also add PMN
+	directive which causes specific ports to be monitored. Simplify
+	FixArray parsing logic. Change IP ignore addresses to be a
+	linked list of addr structures so that a range of addresses is
+	expressed in CIDR notation (xx.xx.xx.xx/nn).

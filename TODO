@@ -1,0 +1,10 @@
+
+***
+***	List of things to do
+***
+
+- With parameter '-l', check that messages aren't flushed between the
+  time the daemon starts up and the time that the logging is moved
+  over to syslog.
+
+- Make labrea run as a service on Windows.

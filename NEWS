@@ -1,0 +1,123 @@
+2.5-beta-1
+	- Unit tested on Win98, WinME, WinXP, linux, OpenBSD, Solaris
+
+	- Added debugging support. Has to be compiled into the pgm via
+          ./configure --enable-debug. Then is controlled with cmd line
+          --debug parameter.
+
+2.5-alpha-1
+	- Add support for automake, autoconf
+
+	- Make code depend on libdnet. Use libdnet defines throughout
+          the code.
+
+	- (dynamic firewall ports) If ports are firewalled (ie no
+	RST), then activity above a certain threshold will make a port
+	start to respond.
+
+	- The firewall code now checks the dest port on all incoming
+          TCP packets.
+
+	- Filter changed to make pgm will only hear packets *sent* to
+	the bogus MAC address instead of all packets.
+
+	- Responses will seem to come from the bogus virtual machine
+	instead of the actual MAC address of the labrea server.
+
+	- (arp sweeps) Pgm does an arp sweep of the capture subnet to
+	try to locate live machines. A new parameter was added to turn
+	this behaviour off if desired. For the arp sweep to happen,
+	the capture subnet must be a "reasonable" size. Arps are sent
+	out in batches of 80 at a time, at 1 - 2 minute intervals.
+
+	- Pgm now takes notes of replies to Arp WHO-HAS and will leave
+          these addresses alone (ie "new kid").
+
+	- The "new kids on the block" logic was converted to use an
+          array instead of a linked list. This should speed up the pgm
+          and simplify the logic at the expense of storage. The "new
+          kids" culling logic was moved into the timer signal handler
+          code so that the new kid list is run at regular intervals
+          but not at each arp.
+
+	- The persistent connection logic was changed (newthisminute)
+          so that the decision is made based on b/w and not just
+          number of connections.
+	
+	- Test mode now logs on sysout. Test mode will not fork a
+	child.
+
+	- Pgm accepts long options at invocation (ie
+          "--my-option"). Usage function was modified to show the long
+          options.
+
+	- Pgm will attempt to parse all input before bailing out.
+
+	- Pcap_dispatch is used instead of Pcap_loop. This makes the
+	pgm more efficient but less responsive to signals on certain
+	operating systems.
+
+	- "-m" parameter is still supported but "-n" can understand a
+	CIDR format IP address (ie xxx.xxx.xxx.xxx/nn)
+
+	- Catastrophic execution error messages go to std
+	error. (warnx)
+
+	- Old style config files are no longer supported.
+
+	- "PMN" directive added to config file to force a port to be
+          monitored.
+
+	- IPI config statement was changed to be in CIDR notation
+          (xx.xx.xx.xx/nn). The IP ignore list is now a linked list of
+          libdnet addr structures.
+
+	- Pgm logic was restructured. Globals were mostly moved into
+          static structures. Enums were used instead of defines. Some
+          #ifdefs were replaced by conditional statements. Message
+          strings were moved back into the main code. Externs and
+          gotos were eliminated. queue.h support was used for linked
+          lists.
+
+	- Signal handling was changed to set a flag only. Signal
+          processing logic is driven by this flag off the mainline
+          loop.
+
+	- Logging to syslog starts after the pgm's initialisation is
+          completed.
+
+	- Added utility print function to centralize all messages and
+          logging.
+
+	- bget functions used for dynamic memory allocation. Runs
+          faster than native support on some operating systems.
+
+	  *** Windows-specific ***
+
+	- Windows version was developed on Cygwin / Mingw. Autoconf
+          support was added for Windows.
+
+	- Syslog support for Windows Event file as well as logging to
+          a remote syslog daemon now works. If remote syslog doesn't
+          work, then fails over to local event log. On Win98 / WinME,
+          an attempt to log to the non-existent local event log causes
+          an error message.
+
+	- Remote syslog code (which was shamelessly borrowed from
+          snort) was modified to open the socket (with possible
+          accompanying DNS search) once at pgm startup, instead of for
+          each new message.
+
+	- A new parameter "-j" was added to select the WinPcap
+          driver. The libdnet intf rtns support "-i" as is the case
+          under Unix. The libdnet rtns are used to determine interface
+          Mac and IP addresses.
+
+	- A new parameter "-D" allows the user to obtain a display of
+          all the libdnet and WinPcap devices. The display also shows
+          the default devices.
+
+	- On Windows, by default logging is to stdout, not syslog.
+
+
+## $Id: NEWS,v 1.1 2003/01/09 18:13:19 lorgor Exp $

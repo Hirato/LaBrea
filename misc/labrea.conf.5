@@ -1,0 +1,243 @@
+.\"
+.\" Copyright (c) 2002 Tom Liston <tliston@premmag.com>
+.\"
+.\" $Id: labrea.conf.5,v 1.1 2003/01/09 18:13:19 lorgor Exp $
+.\"
+.TH LABREA.CONF 5
+.SH NAME
+labrea.conf \- labrea(1) configuration file
+.SH SYNOPSIS
+\fBnnn.nnn.nnn.nnn [- nnn.nnn.nnn.nnn] EXC\fR
+.LP
+\fBnnn.nnn.nnn.nnn [- nnn.nnn.nnn.nnn] HAR\fR
+.LP
+\fBnnn.nnn.nnn.nnn[/nn] IPI\fR
+.LP
+\fBnnnnn [- nnnnn] POR\fR
+.LP
+\fBnnnnn [- nnnnn] PMN\fR
+.LP
+.SH DESCRIPTION
+.SS Generalities 
+.I labrea.conf
+is the configuration file for the 
+.B labrea(1)
+program.
+.LP
+Each line consists of a selector field, followed by an action verb.
+.LP
+Whitespace is suppressed. Blank lines are ignored, as are lines
+beginning with "#".
+.SS Selectors
+.LP
+IPs can be specified as either a single address (e.g. "192.168.0.4")
+or as a range of addresses (e.g. "192.168.0.1 - 192.168.0.50").
+.LP
+Ports can be specified as either a single port (e.g. 12345) or as a
+range of ports (e.g. 1-65535).
+.LP
+.SS IP Capturing
+When labrea sees an ARP request for an unused IP, it does the
+following:
+.LP
+On an IP by IP basis, store a time and an originating IP address:
+.IP 1.
+For an incoming ARP request, check the current time:
+.RS
+.IP a.
+If currently stored time is 0 or the arp comes from a different
+address than the one stored, then store the current time and the
+requesting IP and return.
+.IP b.
+If the stored time is less than "-r" seconds ago, ignore it and
+return.
+.IP c.
+If currently stored time is more than a minute ago,
+store 0, return. (Max timeout)
+.IP d.
+Otherwise, grab the IP.
+.RE
+.IP 2.
+See an ARP reply, set stored time to 0.
+.LP
+When an ARP request for a particular IP goes unanswered for longer
+than its "rate" setting (default: 3 seconds), labrea crafts an ARP
+reply that routes all traffic destined for the IP to a "bogus" MAC
+address.  labrea listens for TCP/IP traffic routed to that MAC address
+and then responds to any SYN packet (ie incoming connection) with a
+SYN/ACK packet.
+.SS Explanation of terms
+.LP
+.B Excluded IPs:
+Are those IPs that labrea should never capture. Note that automatic
+mechanisms are also used to prevent capturing IPs with an active
+machine on it. See
+.B labrea(1)
+for more details.
+.LP
+.B Hard captured IPs:
+The -h --hard-capture option instructs labrea that once it captures an
+IP address, then it needn't wait for a "-r" timeout the next time
+around.  These IPs are said to be "hard" captured.
+.LP
+.B Hard excluded IPS:
+These are IPs that should never be "hard" captured. In other words,
+each time there is an ARP request for this IP, then labrea will always
+wait for the timeout -r secs before responding.
+.LP
+.B Tarpitting:
+On a captured IP, labrea responds to an incoming SYN connection
+attempt with a SYN/ACK. This causes the remote machine's stack to
+initiate the Tcp connection and then waste time fruitlessly trying to
+continue the conversation.
+.LP
+.B Persist state capture:
+labrea can permanently capture connect attempts by closing the TCP
+window to force the connection into "persist" state. In this state,
+the connection never times out, and labrea hangs on to the incoming
+connection until it is closed from the other end.
+.LP
+To accomplish this, short packets are sent every so often to say "keep
+waiting, my Tcp window is still closed". So a maximum b/w control is
+implemented to limit the total b/w consumption. (see the
+.B -p --max-rate
+startup option)
+.LP
+.B Auto hard capturing:
+This is a startup option that says that unless an IP is excluded or
+hard-excluded, then mark it as being hard captured. This is normally a
+risky thing to do and should be used with caution.
+.SS Normal virtual machine behaviour
+.LP
+.B Default port behaviour:
+Incoming connections on any port will be subject to tarpitting
+/ persist capturing.
+.LP
+Since all connections are inbound, there should be no incoming
+SYN/ACKs. Labrea will respond RST to an incoming SYN/ACK unless the
+startup option
+.B -a --no-resp-synack
+disables this behaviour.
+.LP
+.B Excluded ports:
+Ports that are specifically excluded will not be tarpitted or
+persist captured.
+.LP
+Incoming connection attempts on an excluded port will receive a RST.
+.SS Virtual machine behaviour when firewalling:
+.B Active ports:
+When firewalling (i.e.
+.B -f --no-resp-excluded-ports)
+is active, then by default only the most widely used ports are active
+at startup.
+.LP
+Incoming connections on these active ports will be tarpitted and/or
+persist captured as usual.
+.LP
+.B Excluded ports:
+When firewalling is active, incoming connections on excluded ports
+will not receive a response. The packets will be dropped.
+.LP
+Among other things, this means that nmap scans take much more
+time to complete.
+.LP
+.B Other ports:
+Ports that are neither active nor excluded are
+.I passively monitored
+for incoming SYN activity. At startup, they behave as an excluded
+port (i.e. packets are dropped).
+.LP
+However, if there is enough activity on a given port, it will
+dynamically become active. The threshold is more than 6 SYNs for a
+given port in an hour. However every 15 minutes, the port's SYN count
+is reduced by 1 to eliminate noise.
+.LP
+If the SYN count for a port finally reaches 255, then the port is
+considered permanently active.
+.SH USAGE
+This section describes the configuration statements and their usage:
+.TP
+.BR "nnn.nnn.nnn.nnn [- nnn.nnn.nnn.nnn] EXC"
+Never capture the specified IP addresses. This applies to local IP
+addresses (i.e. on the local capture netblock) only.
+.TP
+.BR "nnn.nnn.nnn.nnn [- nnn.nnn.nnn.nnn] HAR"
+WHen "hard capturing" is in effect ("-h"), then never hard capture
+the specified IP addresses. (i.e. Always wait for the ARP timeout
+before responding.) Applies to local IP addresses only.
+.TP
+.BR "nnn.nnn.nnn.nnn[/nn] IPI"
+Ignore any packets with source IP address in the specified
+netblock. labrea will not tarpit or persist capture connections from
+the specified IP addresses.
+.RS
+.LP
+Note that this statement can apply to
+.I any
+IP address.
+.LP
+Note also that the netblock is specified in
+.I CIDR notation
+(ie nnn.nnn.nnn.nnn/nn) and not as a range of IP addresses.
+.RE
+.TP
+.B "nnnnn [- nnnnn] POR"
+These ports are excluded. labrea will not tarpit / persist capture
+incoming connections on these ports. A RST will be returned unless
+firewalling is active. In that case, the incoming packet will be
+dropped.
+.TP
+.B "nnnnn [- nnnnn] PMN"
+At startup, mark the indicated ports as being active. Incoming
+connections to these ports are subject to tarpitting / persist
+capturing.
+.RS
+.LP
+This configuration statement is useful only when firewalling is
+active. The port becomes immediately active, instead of waiting for
+enough SYNs to bump the port's SYN count above the activity threshold.
+.RE
+.SH EXAMPLES
+.LP
+Suppose that the capture subnet is 192.168.10.0/24.
+.LP
+Exclude 192.168.10.5 through .7 from being captured:
+.IP
+192.168.10.5 - 192.168.10.7 EXC
+.LP
+"Hard exclude" 192.168.10.100:
+.IP
+192.168.10.100 HAR
+.LP
+Do not attempt to tarpit / persist capture packets from the class C
+subnet 10.2.3.x:
+.IP
+10.2.3.0/24 IPI
+.LP
+Put in some comments:
+.IP
+.nf
+#
+#	This is a comment
+#
+.fi
+.LP
+Do not tarpit / persist capture on ports 21-25:
+.IP
+21-25 POR
+.LP
+When firewalling, make port 12345 active at startup:
+.IP
+12345 PMN
+.SH FILES
+.TP
+.I /usr/local/etc/labrea.conf
+Default configuration file on unix systems
+.TP
+.I (current directory) LaBrea.cfg
+Default configuration file on Windows systems
+.SH SEE ALSO
+.B labrea(1)
+.SH AUTHOR
+Tom Liston <tliston@hackbusters.net>
+Bugs: lorgor@users.sourceforge.net or http://labrea.sourceforge.net
