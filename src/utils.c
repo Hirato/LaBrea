@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * $Id: utils.c,v 1.3 2003/09/12 21:23:39 lorgor Exp $
+ * $Id: utils.c,v 1.4 2003/09/12 21:26:35 lorgor Exp $
  */
 
 #include "config.h"
@@ -550,9 +550,7 @@ catch_sig_toggle_logging(int sig)
 void
 util_set_signal_handlers(void)
 {
-#ifdef WIN32
-  DWORD dummy;	/* For thread creation */
-#else
+#ifndef WIN32
   static sigset_t set;
   sigemptyset(&set);
   sigprocmask(SIG_SETMASK, &set, NULL);
@@ -594,6 +592,7 @@ util_alarm(void)
   /* fire off an alarm */
   alarm(WAKEUP_SEC);	
 #else
+  DWORD dummy;	/* For thread creation */
   /* Under windows, fire up a thread to simulate a timer pop */
   CloseHandle(CreateThread(NULL,0,util_timer,0,0,&dummy));
 #endif
