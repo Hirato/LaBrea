@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  * 02111-1307, USA.
  *
- * $Id: ctl.c,v 1.1 2003/01/09 18:13:19 lorgor Exp $ */
+ * $Id: ctl.c,v 1.2 2003/09/09 20:49:24 lorgor Exp $ */
 
 #include "config.h"
 
@@ -327,12 +327,11 @@ ctl_init_arrays (int wait)
   tempxflag = ctl.capture;
   ctl.capture &= ~(FL_CAPTURE);
 
-  if (wait)
+  if (wait) {
 #ifdef WIN32
     Sleep(1000);
-#else
-  sleep(1);
 #endif
+  }
 
   if (ctl.capture & FL_AUTO_HARD_CAPTURE)
     set_capture = IP_HARD_CAPTURED;

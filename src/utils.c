@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * $Id: utils.c,v 1.1 2003/01/09 18:13:19 lorgor Exp $
+ * $Id: utils.c,v 1.2 2003/09/09 20:49:24 lorgor Exp $
  */
 
 #include "config.h"
@@ -580,7 +580,16 @@ util_set_signal_handlers(void)
   signal(SIGALRM, catch_sig_timer);
   signal(SIGUSR1, catch_sig_toggle_logging);
 #endif
+}
 
+
+/*
+ * set up the timer pop
+ */
+
+void
+util_alarm(void)
+{
 #ifndef WIN32
   /* fire off an alarm */
   alarm(WAKEUP_SEC);	

@@ -35,7 +35,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
  * 02111-1307, USA.
  *
- * $Id: labrea.c,v 1.1 2003/01/09 18:13:19 lorgor Exp $ */
+ * $Id: labrea.c,v 1.2 2003/09/09 20:49:24 lorgor Exp $ */
 
 #include "config.h"
 
@@ -62,10 +62,12 @@ main (int argc, char **argv)
 {
   labrea_init(argc, argv);	/* Do initialisation */
 
+  if (!WIN32_FLG) 
+    util_detach();		/* Fork to become a daemon if unix*/
+
   util_set_signal_handlers();
 
-  if (!WIN32_FLG)
-    util_detach();	/* Fork to become a daemon if unix*/
+  util_alarm();			/* Set an alarm to cause timer pop */
 
   util_print(NORMAL,"Labrea started");
 

@@ -1,3 +1,27 @@
+2.5-beta-2
+	-This is the release where we changed the cmd line parameters
+        (again -( ).
+	
+	-Unit tested on Win2K, Win98, linux, FreeBSD, Solaris
+
+	-Add support for libdnet-1.7. Since libdnet's API is cleaner,
+	lbio became simpler (good). But the "-i" parameter in windows
+	now is standard, and the -j parameter now refers to the
+	WinPcap device. Sorry about this change.
+
+	-There was an integer overflow problem that had to be dealt
+	with. At the same time, we decided to change --max-rate (-p)
+	parameter to assume input is in units of Kbits to avoid
+	dealing with large bandwidths expressed in bytes. Keep
+	internal totals in KByte units. Set an upper limit on max-rate
+	to avoid integer overflows during calculations. Upper limit is
+	currently 1 GByte/sec = 8 Gbits/sec. Sorry if this change
+	causes inconvenience.
+
+	-Corrected problem with timer pop so that bandwidth usage will
+	be reported. Certain OSs were not working properly.
+
+
 2.5-beta-1
 	- Unit tested on Win98, WinME, WinXP, linux, OpenBSD, Solaris
 
@@ -120,4 +144,4 @@
 	- On Windows, by default logging is to stdout, not syslog.
 
 
-## $Id: NEWS,v 1.1 2003/01/09 18:13:19 lorgor Exp $
+## $Id: NEWS,v 1.2 2003/09/09 20:49:24 lorgor Exp $
